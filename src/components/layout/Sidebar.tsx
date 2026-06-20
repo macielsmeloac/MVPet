@@ -49,6 +49,8 @@ export function Sidebar() {
           label: 'Painel da Clínica',
           icon: Building,
           path: '/admin',
+          plans: ['petshop', 'clinic', 'office', 'complete'],
+          category: 'Gestão & Administração',
         },
       ],
     });
@@ -79,11 +81,11 @@ export function Sidebar() {
           </div>
           {!sidebarCollapsed && (
             <span className="text-lg font-bold text-surface-900 dark:text-white tracking-tight animate-fade-in">
-              {isSuperAdminMode ? 'MVPet SaaS' : 'MVPet'}
+              {isSuperAdmin ? 'MVPet SaaS' : 'MVPet'}
             </span>
           )}
         </div>
-        {isSuperAdminMode && !sidebarCollapsed && (
+        {isSuperAdmin && !sidebarCollapsed && (
           <div className="px-4 pb-2 -mt-2 text-[9px] font-bold text-amber-500 tracking-widest uppercase animate-fade-in">
             Painel Geral
           </div>
@@ -102,7 +104,7 @@ export function Sidebar() {
             {items.map((item) => {
               // Verifica se o item está ativo comparando a rota atual + query params
               const currentPath = location.pathname + location.search;
-              const isItemActive = isSuperAdminMode 
+              const isItemActive = isSuperAdmin 
                 ? currentPath === item.path || (item.id === 'saas-dashboard' && currentPath === '/super-admin')
                 : location.pathname === item.path;
 
@@ -112,7 +114,7 @@ export function Sidebar() {
                   to={item.path}
                   className={`group flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-[13.5px] font-medium transition-all duration-200 mb-0.5 ${
                     isItemActive
-                      ? isSuperAdminMode
+                      ? isSuperAdmin
                         ? 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 font-semibold'
                         : 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400'
                       : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-white'
