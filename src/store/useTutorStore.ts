@@ -55,7 +55,7 @@ export const useTutorStore = create<TutorState>((set) => ({
       tutorAuth: mockTutor, 
       availableClinics: mockClinics,
       // Se tiver só uma clínica, já seleciona direto. Senão, deixa null pra ele escolher.
-      activeClinicId: mockClinics.length === 1 ? mockClinics[0].id : null 
+      activeClinicId: mockClinics.length === 1 ? mockClinics[0]?.id : null
     });
 
     return true;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShoppingBag, Search, Plus, Minus, CreditCard, QrCode } from 'lucide-react';
+import { ShoppingBag, Search, Plus, Minus, CreditCard, QrCode, CheckCircle } from 'lucide-react';
 import { useTutorStore } from '../../store/useTutorStore';
 
 export function TutorMarketplacePage() {
@@ -241,7 +241,7 @@ export function TutorMarketplacePage() {
       {checkoutStep === 'success' && (
         <div className="max-w-md mx-auto text-center py-12">
           <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+            <CheckCircle className="w-10 h-10 text-emerald-500" />
           </div>
           <h2 className="text-3xl font-extrabold text-surface-900 dark:text-white mb-4">Pedido Confirmado!</h2>
           <p className="text-surface-600 dark:text-surface-400 mb-8">
