@@ -1,0 +1,11 @@
+.agent/
+.env
+dist/
+node_modules/
+
+.agent/
+.env
+.agent/
+.env
+dist/
+node_modules/
