@@ -3,19 +3,13 @@ import { ShoppingBag, Search, Plus, Minus, CreditCard, QrCode, CheckCircle } fro
 import { useTutorStore } from '../../store/useTutorStore';
 
 export function TutorMarketplacePage() {
-  const { tutorAuth } = useTutorStore();
+  const { tutorAuth, products, placeOrder } = useTutorStore();
   const [cart, setCart] = useState<{id: string, name: string, price: number, qty: number}[]>([]);
   const [checkoutStep, setCheckoutStep] = useState<'shop' | 'cart' | 'payment' | 'success'>('shop');
   const [paymentMethod, setPaymentMethod] = useState<'credit' | 'pix'>('credit');
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   if (!tutorAuth) return null;
-
-  // Mock Products from current clinic
-  const products = [
-    { id: 'p1', name: 'Ração Golden Duo Cães Adultos 15kg', price: 159.90, image: 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=300&q=80', stock: 5 },
-    { id: 'p2', name: 'Antipulgas Bravecto 10 a 20kg', price: 210.00, image: 'https://images.unsplash.com/photo-1623366302587-bcaecbfc0865?w=300&q=80', stock: 12 },
-    { id: 'p3', name: 'Shampoo Neutro Pet 500ml', price: 35.50, image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=300&q=80', stock: 8 },
-  ];
 
   const addToCart = (product: typeof products[0]) => {
     setCart(prev => {
@@ -23,7 +17,7 @@ export function TutorMarketplacePage() {
       if (existing) {
         return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
       }
-      return [...prev, { id: product.id, name: product.name, price: product.price, qty: 1 }];
+      return [...prev, { id: product.id, name: product.name, price: product.salePrice, qty: 1 }];
     });
   };
 
@@ -43,10 +37,17 @@ export function TutorMarketplacePage() {
 
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
-  const handleFinishOrder = () => {
-    // In a real app, send to API: create order with "pending_separation" status
-    setCheckoutStep('success');
-    setCart([]);
+  const handleFinishOrder = async () => {
+    setIsPlacingOrder(true);
+    const success = await placeOrder(cart);
+    setIsPlacingOrder(false);
+    
+    if (success) {
+      setCheckoutStep('success');
+      setCart([]);
+    } else {
+      alert('Ocorreu um erro ao processar o pedido. Tente novamente.');
+    }
   };
 
   return (
@@ -82,16 +83,20 @@ export function TutorMarketplacePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map(product => (
               <div key={product.id} className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 overflow-hidden flex flex-col group hover:shadow-lg transition-all">
-                <div className="h-48 overflow-hidden bg-surface-100 dark:bg-surface-900">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal group-hover:scale-105 transition-transform duration-500" />
+                <div className="h-48 overflow-hidden bg-surface-100 dark:bg-surface-900 flex items-center justify-center">
+                  {product.imageUrl ? (
+                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <ShoppingBag className="w-16 h-16 text-surface-300" />
+                  )}
                 </div>
                 <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-bold text-surface-900 dark:text-white mb-2 flex-1">{product.name}</h3>
                   <div className="flex items-end justify-between mt-4">
                     <div>
-                      <p className="text-xs text-surface-500 mb-1">Estoque: {product.stock}</p>
+                      <p className="text-xs text-surface-500 mb-1">Estoque: {product.stockQuantity || 0}</p>
                       <p className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                        R$ {product.price.toFixed(2).replace('.', ',')}
+                        R$ {(product.salePrice || 0).toFixed(2).replace('.', ',')}
                       </p>
                     </div>
                     <button 
@@ -230,9 +235,10 @@ export function TutorMarketplacePage() {
             </button>
             <button 
               onClick={handleFinishOrder}
-              className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors shadow-sm w-2/3"
+              disabled={isPlacingOrder}
+              className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold transition-colors shadow-sm w-2/3"
             >
-              Confirmar Pagamento
+              {isPlacingOrder ? 'Processando...' : 'Confirmar Pagamento'}
             </button>
           </div>
         </div>

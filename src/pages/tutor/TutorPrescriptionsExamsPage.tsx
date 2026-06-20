@@ -1,36 +1,50 @@
 import { ClipboardList, Download, FileText, FlaskConical } from 'lucide-react';
 import { useTutorStore } from '../../store/useTutorStore';
+import { format, parseISO } from 'date-fns';
 
 export function TutorPrescriptionsExamsPage() {
-  const { tutorAuth } = useTutorStore();
+  const { tutorAuth, pets, medicalRecords } = useTutorStore();
 
   if (!tutorAuth) return null;
 
-  // Mock data
-  const documents = [
-    {
-      id: 'doc-1',
-      petName: 'Rex',
-      date: '10/10/2026',
-      type: 'prescription',
-      title: 'Receita Médica - Antibiótico',
-      vet: 'Dr. Marcos',
-    },
-    {
-      id: 'doc-2',
-      petName: 'Luna',
-      date: '05/09/2026',
-      type: 'exam',
-      title: 'Resultado de Hemograma',
-      vet: 'Laboratório Central',
+  const documents: any[] = [];
+
+  // Extract prescriptions from medical records
+  medicalRecords.forEach(mr => {
+    if (mr.prescriptions && Array.isArray(mr.prescriptions) && mr.prescriptions.length > 0) {
+      const petName = pets.find(p => p.id === mr.petId)?.name || 'Pet';
+      
+      // For each prescription in the array
+      mr.prescriptions.forEach((presc: any, index: number) => {
+        documents.push({
+          id: `presc-${mr.id}-${index}`,
+          petName,
+          date: mr.date,
+          sortDate: new Date(mr.date).getTime(),
+          type: 'prescription',
+          title: presc.medication ? `Receita - ${presc.medication}` : 'Receita Médica',
+          vet: mr.veterinarianName,
+        });
+      });
     }
-  ];
+  });
+
+  // Sort descending by date
+  documents.sort((a, b) => b.sortDate - a.sortDate);
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(parseISO(dateString), 'dd/MM/yyyy');
+    } catch {
+      return dateString;
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Exames e Receitas</h1>
-        <p className="text-surface-500">Acesse laudos e prescrições médicas digitalizadas.</p>
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Receitas</h1>
+        <p className="text-surface-500">Acesse as prescrições médicas emitidas para seus pets.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -49,7 +63,7 @@ export function TutorPrescriptionsExamsPage() {
                   {doc.title}
                 </h3>
                 <p className="text-sm text-surface-500 flex items-center gap-1">
-                  <span className="font-medium text-surface-700 dark:text-surface-300">{doc.petName}</span> • {doc.date}
+                  <span className="font-medium text-surface-700 dark:text-surface-300">{doc.petName}</span> • {formatDate(doc.date)}
                 </p>
                 <p className="text-xs text-surface-400 mt-1">{doc.vet}</p>
               </div>
@@ -61,6 +75,13 @@ export function TutorPrescriptionsExamsPage() {
             </button>
           </div>
         ))}
+
+        {documents.length === 0 && (
+          <div className="col-span-full text-center py-12 bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700">
+            <FileText className="w-12 h-12 text-surface-300 mx-auto mb-4" />
+            <p className="text-surface-500 font-medium">Nenhuma receita encontrada.</p>
+          </div>
+        )}
       </div>
     </div>
   );

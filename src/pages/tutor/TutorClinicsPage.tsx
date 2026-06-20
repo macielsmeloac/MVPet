@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Store, ChevronRight, LogOut } from 'lucide-react';
 import { useTutorStore } from '../../store/useTutorStore';
 import { useNavigate } from 'react-router-dom';
@@ -8,8 +9,12 @@ export function TutorClinicsPage() {
 
   if (!tutorAuth) return null;
 
-  const handleSelectClinic = (clinicId: string) => {
-    setActiveClinic(clinicId);
+  const [loadingClinicId, setLoadingClinicId] = useState<string | null>(null);
+
+  const handleSelectClinic = async (clinicId: string) => {
+    setLoadingClinicId(clinicId);
+    await setActiveClinic(clinicId);
+    setLoadingClinicId(null);
     navigate('/tutor/painel');
   };
 
@@ -57,7 +62,11 @@ export function TutorClinicsPage() {
                 <p className="text-sm text-surface-500">Acessar prontuários, vacinas e compras</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-surface-100 dark:bg-surface-700 flex items-center justify-center group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/50 transition-colors">
-                <ChevronRight className="w-5 h-5 text-surface-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
+                {loadingClinicId === clinic.id ? (
+                  <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-surface-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
+                )}
               </div>
             </button>
           ))}

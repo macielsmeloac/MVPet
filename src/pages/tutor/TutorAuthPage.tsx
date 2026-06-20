@@ -19,7 +19,12 @@ export function TutorAuthPage() {
     try {
       const success = await login(cpfOrEmail);
       if (success) {
-        navigate('/tutor');
+        const clinics = useTutorStore.getState().availableClinics;
+        if (clinics.length > 1) {
+          navigate('/tutor/clinics');
+        } else {
+          navigate('/tutor');
+        }
       } else {
         setError('Tutor não encontrado. Verifique seu E-mail ou CPF.');
       }

@@ -23,6 +23,7 @@ interface DataState {
   administerMedication: (hospId: string, medId: string, hour: string, by: string, justification?: string, exactDateTime?: string) => void;
   updateTransportStatus: (id: string, status: TransportOrder['status']) => void;
   addPet: (pet: Pet) => void;
+  updatePet: (id: string, updates: Partial<Pet>) => void;
   addTutor: (tutor: Tutor) => void;
   addAppointment: (appointment: Appointment) => void;
   updateAppointment: (id: string, appointment: Partial<Appointment>) => void;
@@ -67,32 +68,71 @@ export const useDataStore = create<DataState>()(
       initializeData: async () => {
         if (get().initialized) return;
 
-        // Buscar dados do Supabase
         const { data: sessionData } = await supabase.auth.getSession();
-        const clinicId = sessionData.session?.user?.id; // No trigger o owner_id é o id do user
+        const clinicOwnerId = sessionData.session?.user?.id;
 
+        // Defaults (seed data)
         let supaTutors = seedTutors;
         let supaPets = seedPets;
         let supaAppointments = seedAppointments;
+        let supaProducts = seedProducts;
+        let supaHospitalizations = seedHospitalizations;
+        let supaTransactions = seedTransactions;
+        let supaTransportOrders = seedTransportOrders;
+        let supaSubscriptionPlans = seedSubscriptionPlans;
+        let supaCommissions = seedCommissions;
+        let supaVaccinations = seedVaccinations;
+        let supaMedicalRecords: import('../types').SavedMedicalRecord[] = [];
+        let supaComandas: Record<string, ComandaItem[]> = {};
 
-        if (clinicId) {
+        if (clinicOwnerId) {
           try {
-            const { data: dbClinics } = await supabase.from('clinics').select('id').eq('owner_id', clinicId).single();
+            const { data: dbClinics } = await supabase.from('clinics').select('id').eq('owner_id', clinicOwnerId).single();
             if (dbClinics) {
               const cid = dbClinics.id;
-              
-              const [tutRes, petRes, appRes] = await Promise.all([
+
+              const [
+                tutRes, petRes, appRes, prodRes, hospRes,
+                transRes, transportRes, planRes, commRes, vacRes, mrRes, comandaRes
+              ] = await Promise.all([
                 supabase.from('tutors').select('*').eq('clinic_id', cid),
                 supabase.from('pets').select('*').eq('clinic_id', cid),
-                supabase.from('appointments').select('*').eq('clinic_id', cid)
+                supabase.from('appointments').select('*').eq('clinic_id', cid),
+                supabase.from('products').select('*').eq('clinic_id', cid),
+                supabase.from('hospitalizations').select('*').eq('clinic_id', cid),
+                supabase.from('transactions').select('*').eq('clinic_id', cid),
+                supabase.from('transport_orders').select('*').eq('clinic_id', cid),
+                supabase.from('subscription_plans').select('*').eq('clinic_id', cid),
+                supabase.from('commissions').select('*').eq('clinic_id', cid),
+                supabase.from('vaccinations').select('*').eq('clinic_id', cid),
+                supabase.from('medical_records').select('*').eq('clinic_id', cid),
+                supabase.from('comanda_items').select('*').eq('clinic_id', cid),
               ]);
 
-              if (tutRes.data && tutRes.data.length > 0) supaTutors = tutRes.data as any;
-              if (petRes.data && petRes.data.length > 0) supaPets = petRes.data as any;
-              if (appRes.data && appRes.data.length > 0) supaAppointments = appRes.data as any;
+              if (tutRes.data?.length) supaTutors = tutRes.data as any;
+              if (petRes.data?.length) supaPets = petRes.data as any;
+              if (appRes.data?.length) supaAppointments = appRes.data as any;
+              if (prodRes.data?.length) supaProducts = prodRes.data as any;
+              if (hospRes.data?.length) supaHospitalizations = hospRes.data as any;
+              if (transRes.data?.length) supaTransactions = transRes.data as any;
+              if (transportRes.data?.length) supaTransportOrders = transportRes.data as any;
+              if (planRes.data?.length) supaSubscriptionPlans = planRes.data as any;
+              if (commRes.data?.length) supaCommissions = commRes.data as any;
+              if (vacRes.data?.length) supaVaccinations = vacRes.data as any;
+              if (mrRes.data?.length) supaMedicalRecords = mrRes.data as any;
+
+              // Rebuild comandas map from flat rows
+              if (comandaRes.data?.length) {
+                supaComandas = (comandaRes.data as any[]).reduce((acc: Record<string, ComandaItem[]>, row) => {
+                  const tid = row.tutor_id as string;
+                  if (!acc[tid]) acc[tid] = [];
+                  acc[tid].push({ id: row.id, name: row.name, type: row.type, price: row.price, quantity: row.quantity });
+                  return acc;
+                }, {});
+              }
             }
           } catch(e) {
-            console.error('Error fetching from supabase', e);
+            console.error('[MVPet] Error fetching from Supabase:', e);
           }
         }
 
@@ -100,15 +140,15 @@ export const useDataStore = create<DataState>()(
           pets: supaPets,
           tutors: supaTutors,
           appointments: supaAppointments,
-          products: seedProducts,
-          hospitalizations: seedHospitalizations,
-          transactions: seedTransactions,
-          transportOrders: seedTransportOrders,
-          subscriptionPlans: seedSubscriptionPlans,
-          commissions: seedCommissions,
-          vaccinations: seedVaccinations,
-          medicalRecords: [],
-          comandas: {},
+          products: supaProducts,
+          hospitalizations: supaHospitalizations,
+          transactions: supaTransactions,
+          transportOrders: supaTransportOrders,
+          subscriptionPlans: supaSubscriptionPlans,
+          commissions: supaCommissions,
+          vaccinations: supaVaccinations,
+          medicalRecords: supaMedicalRecords,
+          comandas: supaComandas,
           initialized: true,
         });
       },
@@ -220,6 +260,9 @@ export const useDataStore = create<DataState>()(
           }
         }
       },
+      updatePet: (id, updates) => set((s) => ({
+        pets: s.pets.map((p) => p.id === id ? { ...p, ...updates } : p)
+      })),
       addTutor: async (tutor) => {
         set((s) => ({ tutors: [...s.tutors, tutor] }));
         const { data: sessionData } = await supabase.auth.getSession();
@@ -241,52 +284,92 @@ export const useDataStore = create<DataState>()(
         }
       },
       updateAppointment: (id, appointment) => set((s) => ({ appointments: s.appointments.map((a) => a.id === id ? { ...a, ...appointment } : a) })),
-      addProduct: (product) => set((s) => ({ products: [...s.products, product] })),
-      addTransaction: (transaction) => set((s) => ({ transactions: [...s.transactions, transaction] })),
-      addSubscriptionPlan: (plan) => set((s) => ({ subscriptionPlans: [...s.subscriptionPlans, plan] })),
-      updateSubscriptionPlan: (id, updates) => set((s) => ({
-        subscriptionPlans: s.subscriptionPlans.map((p) => p.id === id ? { ...p, ...updates } : p),
-      })),
-      deleteSubscriptionPlan: (id) => set((s) => ({
-        subscriptionPlans: s.subscriptionPlans.map((p) => p.id === id ? { ...p, isActive: false } : p),
-      })),
-
-      addItemToComanda: (tutorId, item) => set((s) => {
-        const tutorComanda = s.comandas[tutorId] || [];
-        const existingItem = tutorComanda.find((i) => i.id === item.id || (i.name === item.name && i.type === item.type));
-        
-        let newComanda;
-        if (existingItem) {
-          newComanda = tutorComanda.map((i) =>
-            i.id === existingItem.id ? { ...i, quantity: i.quantity + item.quantity } : i
-          );
-        } else {
-          newComanda = [...tutorComanda, item];
+      addProduct: async (product) => {
+        set((s) => ({ products: [...s.products, product] }));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) await supabase.from('products').insert({ ...product, clinic_id: clinic.id, min_quantity: product.minQuantity, cost_price: product.costPrice, expiry_date: product.expiryDate, alert_type: product.alertType, sales_unit: product.salesUnit, conversion_factor: product.conversionFactor });
         }
+      },
+      addTransaction: async (transaction) => {
+        set((s) => ({ transactions: [...s.transactions, transaction] }));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) await supabase.from('transactions').insert({ ...transaction, clinic_id: clinic.id, payment_method: transaction.paymentMethod, invoice_status: transaction.invoiceStatus, invoice_type: transaction.invoiceType, related_appointment_id: transaction.relatedAppointmentId });
+        }
+      },
+      addSubscriptionPlan: async (plan) => {
+        set((s) => ({ subscriptionPlans: [...s.subscriptionPlans, plan] }));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) await supabase.from('subscription_plans').insert({ ...plan, clinic_id: clinic.id, is_active: plan.isActive, is_featured: plan.isFeatured, highlight_color: plan.highlightColor });
+        }
+      },
+      updateSubscriptionPlan: async (id, updates) => {
+        set((s) => ({
+          subscriptionPlans: s.subscriptionPlans.map((p) => p.id === id ? { ...p, ...updates } : p),
+        }));
+        await supabase.from('subscription_plans').update({ ...updates, is_active: updates.isActive, is_featured: updates.isFeatured, highlight_color: updates.highlightColor }).eq('id', id);
+      },
+      deleteSubscriptionPlan: async (id) => {
+        set((s) => ({
+          subscriptionPlans: s.subscriptionPlans.map((p) => p.id === id ? { ...p, isActive: false } : p),
+        }));
+        await supabase.from('subscription_plans').update({ is_active: false }).eq('id', id);
+      },
 
-        return {
-          comandas: {
-            ...s.comandas,
-            [tutorId]: newComanda,
-          },
-        };
-      }),
+      addItemToComanda: async (tutorId, item) => {
+        set((s) => {
+          const tutorComanda = s.comandas[tutorId] || [];
+          const existingItem = tutorComanda.find((i) => i.id === item.id || (i.name === item.name && i.type === item.type));
+          let newComanda;
+          if (existingItem) {
+            newComanda = tutorComanda.map((i) =>
+              i.id === existingItem.id ? { ...i, quantity: i.quantity + item.quantity } : i
+            );
+          } else {
+            newComanda = [...tutorComanda, item];
+          }
+          return { comandas: { ...s.comandas, [tutorId]: newComanda } };
+        });
+        // Persist to Supabase
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) {
+            // Upsert by id to handle quantity increments
+            await supabase.from('comanda_items').upsert({
+              id: item.id,
+              clinic_id: clinic.id,
+              tutor_id: tutorId,
+              name: item.name,
+              type: item.type,
+              price: item.price,
+              quantity: item.quantity,
+            });
+          }
+        }
+      },
 
-      removeItemFromComanda: (tutorId, itemId) => set((s) => {
-        const tutorComanda = s.comandas[tutorId] || [];
-        return {
-          comandas: {
-            ...s.comandas,
-            [tutorId]: tutorComanda.filter((i) => i.id !== itemId),
-          },
-        };
-      }),
+      removeItemFromComanda: async (tutorId, itemId) => {
+        set((s) => {
+          const tutorComanda = s.comandas[tutorId] || [];
+          return { comandas: { ...s.comandas, [tutorId]: tutorComanda.filter((i) => i.id !== itemId) } };
+        });
+        await supabase.from('comanda_items').delete().eq('id', itemId);
+      },
 
-      clearComanda: (tutorId) => set((s) => {
-        const copy = { ...s.comandas };
-        delete copy[tutorId];
-        return { comandas: copy };
-      }),
+      clearComanda: async (tutorId) => {
+        set((s) => {
+          const copy = { ...s.comandas };
+          delete copy[tutorId];
+          return { comandas: copy };
+        });
+        await supabase.from('comanda_items').delete().eq('tutor_id', tutorId);
+      },
 
       depositTutorCredits: (tutorId, amount) =>
         set((s) => {
@@ -319,85 +402,86 @@ export const useDataStore = create<DataState>()(
           };
         }),
 
-      dischargePatient: (hospId, recommendations, report) =>
+      dischargePatient: async (hospId, recommendations, report) => {
+        let finalHospState: import('../types').Hospitalization | null = null;
+        let newRecord: import('../types').SavedMedicalRecord | null = null;
+
         set((s) => {
           const hosp = s.hospitalizations.find((h) => h.id === hospId);
           if (!hosp) return {};
-          
           const pet = s.pets.find(p => p.id === hosp.petId);
           if (!pet) return {};
 
           let totalRefund = 0;
-
-          // Processar estorno de medicações pendentes na alta
-          const newHospitalizations = s.hospitalizations.map((h) => {
-            if (h.id !== hospId) return h;
-            
-            const finalMedications = h.medications.map(m => {
-              if (m.status !== 'suspended') {
-                const unadministered = m.times.filter(t => !t.administered);
-                totalRefund += unadministered.length * (m.pricePerUnit || 0);
-              }
-              // Marca tudo como concluído e remove as pendentes da grade
-              return { ...m, status: 'completed' as const, times: m.times.filter(t => t.administered) };
-            });
-
-            return {
-              ...h,
-              status: 'discharged' as const,
-              dischargeDate: new Date().toISOString().split('T')[0] || '',
-              dischargeRecommendations: recommendations,
-              dischargeReport: report,
-              isAccountFrozen: true,
-              medications: finalMedications
-            };
+          const finalMedications = hosp.medications.map(m => {
+            if (m.status !== 'suspended') {
+              const unadministered = m.times.filter(t => !t.administered);
+              totalRefund += unadministered.length * (m.pricePerUnit || 0);
+            }
+            return { ...m, status: 'completed' as const, times: m.times.filter(t => t.administered) };
           });
 
-          // Adicionar estorno na comanda se houver
+          const updatedHosp = {
+            ...hosp, status: 'discharged' as const,
+            dischargeDate: new Date().toISOString().split('T')[0] || '',
+            dischargeRecommendations: recommendations, dischargeReport: report,
+            isAccountFrozen: true, medications: finalMedications
+          };
+          finalHospState = updatedHosp;
+
+          const newHospitalizations = s.hospitalizations.map((h) => h.id === hospId ? updatedHosp : h);
+
           let newComandas = s.comandas;
           if (totalRefund > 0) {
             const tutorId = pet.tutorId;
-            const tutorComanda = s.comandas[tutorId] || [];
             const refundItem = {
-              id: `refund-discharge-${Date.now()}`,
-              name: `Estorno (Alta Médica): Doses não aplicadas`,
-              type: 'product' as const,
-              price: -Math.abs(totalRefund),
-              quantity: 1,
+              id: `refund-discharge-${Date.now()}`, name: `Estorno (Alta Médica): Doses não aplicadas`,
+              type: 'product' as const, price: -Math.abs(totalRefund), quantity: 1,
             };
-            newComandas = {
-              ...s.comandas,
-              [tutorId]: [...tutorComanda, refundItem],
-            };
+            newComandas = { ...s.comandas, [tutorId]: [...(s.comandas[tutorId] || []), refundItem] };
           }
 
           const recordId = `rec-${Date.now()}`;
-          const newRecord: import('../types').SavedMedicalRecord = {
-            id: recordId,
-            petId: hosp.petId,
+          newRecord = {
+            id: recordId, petId: hosp.petId,
             date: new Date().toISOString().split('T')[0] || '',
             veterinarianName: hosp.veterinarianName,
             chiefComplaint: `Internação (Leito ${hosp.bedNumber}): ${hosp.reason}`,
-            conduct: recommendations,
-            observations: report,
+            conduct: recommendations, observations: report,
             prescriptions: hosp.medications.map(m => ({
-              id: m.id,
-              medication: m.medication,
-              dosage: m.dosage,
-              route: m.route,
-              frequency: `${m.frequencyHours || 8}h`,
-              duration: `${m.durationDays || 1} dias`,
+              id: m.id, medication: m.medication, dosage: m.dosage, route: m.route,
+              frequency: `${m.frequencyHours || 8}h`, duration: `${m.durationDays || 1} dias`,
               instructions: `Via de administração: ${m.route}`
             })),
             createdAt: new Date().toISOString()
           };
 
-          return {
-            hospitalizations: newHospitalizations,
-            medicalRecords: [...s.medicalRecords, newRecord],
-            comandas: newComandas
-          };
-        }),
+          return { hospitalizations: newHospitalizations, medicalRecords: [...s.medicalRecords, newRecord!], comandas: newComandas };
+        });
+
+        // Persist to Supabase
+        const { data: sessionData } = await supabase.auth.getSession();
+        const castRecord = newRecord as import('../types').SavedMedicalRecord | null;
+        const castHosp = finalHospState as import('../types').Hospitalization | null;
+        if (sessionData.session?.user?.id && castHosp && castRecord) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) {
+            await Promise.all([
+              supabase.from('hospitalizations').update({
+                status: 'discharged', discharge_date: castHosp.dischargeDate,
+                discharge_recommendations: recommendations, discharge_report: report,
+                is_account_frozen: true, medications: castHosp.medications,
+              }).eq('id', hospId),
+              supabase.from('medical_records').insert({
+                id: castRecord.id, clinic_id: clinic.id, pet_id: castRecord.petId,
+                date: castRecord.date, veterinarian_name: castRecord.veterinarianName,
+                chief_complaint: castRecord.chiefComplaint, conduct: castRecord.conduct,
+                observations: castRecord.observations, prescriptions: castRecord.prescriptions,
+              }),
+            ]);
+          }
+        }
+      },
 
       processDailyBedRates: () =>
         set((s) => {
@@ -438,28 +522,90 @@ export const useDataStore = create<DataState>()(
           };
         }),
 
-      updateTutorDebtStatus: (tutorId, hasDebt) =>
+      updateTutorDebtStatus: async (tutorId, hasDebt) => {
         set((s) => ({
           tutors: s.tutors.map((t) =>
             t.id === tutorId ? { ...t, hasDebt, blockedByDebt: hasDebt } : t
           ),
-        })),
+        }));
+        await supabase.from('tutors').update({ has_debt: hasDebt, blocked_by_debt: hasDebt }).eq('id', tutorId);
+      },
 
-      addCommission: (commission) =>
-        set((s) => ({ commissions: [...s.commissions, commission] })),
+      addCommission: async (commission) => {
+        set((s) => ({ commissions: [...s.commissions, commission] }));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) {
+            await supabase.from('commissions').insert({
+              id: commission.id,
+              clinic_id: clinic.id,
+              employee_name: commission.employeeName,
+              transaction_id: commission.transactionId,
+              service_description: commission.serviceDescription,
+              sale_amount: commission.saleAmount,
+              commission_rate: commission.commissionRate,
+              commission_value: commission.commissionValue,
+              date: commission.date,
+              status: commission.status,
+            });
+          }
+        }
+      },
 
-      markCommissionPaid: (id) =>
+      markCommissionPaid: async (id) => {
         set((s) => ({
           commissions: s.commissions.map((c) =>
             c.id === id ? { ...c, status: 'paid' as const } : c
           ),
-        })),
+        }));
+        await supabase.from('commissions').update({ status: 'paid' }).eq('id', id);
+      },
 
-      addVaccination: (v) =>
-        set((s) => ({ vaccinations: [...s.vaccinations, v] })),
+      addVaccination: async (v) => {
+        set((s) => ({ vaccinations: [...s.vaccinations, v] }));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) {
+            await supabase.from('vaccinations').insert({
+              id: v.id,
+              clinic_id: clinic.id,
+              pet_id: v.petId,
+              vaccine_name: v.vaccineName,
+              vaccine_type: v.vaccineType,
+              application_date: v.applicationDate,
+              next_dose_date: v.nextDoseDate,
+              veterinarian_name: v.veterinarianName,
+              lot: v.lot,
+              manufacturer: v.manufacturer,
+              notes: v.notes,
+            });
+          }
+        }
+      },
 
-      addMedicalRecord: (r) =>
-        set((s) => ({ medicalRecords: [...s.medicalRecords, r] })),
+      addMedicalRecord: async (r) => {
+        set((s) => ({ medicalRecords: [...s.medicalRecords, r] }));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          const { data: clinic } = await supabase.from('clinics').select('id').eq('owner_id', sessionData.session.user.id).single();
+          if (clinic) {
+            await supabase.from('medical_records').insert({
+              id: r.id,
+              clinic_id: clinic.id,
+              pet_id: r.petId,
+              date: r.date,
+              veterinarian_name: r.veterinarianName,
+              chief_complaint: r.chiefComplaint,
+              conduct: r.conduct,
+              observations: r.observations,
+              next_return: r.nextReturn || null,
+              prescriptions: r.prescriptions,
+            });
+          }
+        }
+      },
 
       addHospitalizationPrescription: (hospId, medSchedule, billingItem, tutorId) =>
         set((s) => {

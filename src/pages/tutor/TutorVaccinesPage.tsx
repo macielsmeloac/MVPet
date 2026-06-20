@@ -1,38 +1,39 @@
 import { Syringe, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useTutorStore } from '../../store/useTutorStore';
+import { parseISO, format, differenceInDays } from 'date-fns';
 
 export function TutorVaccinesPage() {
-  const { tutorAuth } = useTutorStore();
+  const { tutorAuth, pets, vaccinations } = useTutorStore();
 
   if (!tutorAuth) return null;
 
-  // Mock data
-  const vaccines = [
-    {
-      id: 'vac-1',
-      petName: 'Rex',
-      vaccine: 'V10',
-      dateGiven: '15/10/2025',
-      nextDose: '15/10/2026',
-      status: 'due_soon', // up_to_date, due_soon, overdue
-    },
-    {
-      id: 'vac-2',
-      petName: 'Rex',
-      vaccine: 'Raiva',
-      dateGiven: '20/12/2025',
-      nextDose: '20/12/2026',
-      status: 'up_to_date',
-    },
-    {
-      id: 'vac-3',
-      petName: 'Luna',
-      vaccine: 'V4 (Felina)',
-      dateGiven: '01/01/2025',
-      nextDose: '01/01/2026',
-      status: 'overdue',
+  const today = new Date();
+
+  const vaccines = vaccinations.map(vac => {
+    const petName = pets.find(p => p.id === vac.petId)?.name || 'Pet';
+    
+    let status = 'up_to_date';
+    if (vac.nextDoseDate) {
+      const nextDate = parseISO(vac.nextDoseDate);
+      const daysUntil = differenceInDays(nextDate, today);
+      
+      if (daysUntil < 0) {
+        status = 'overdue';
+      } else if (daysUntil <= 15) {
+        status = 'due_soon';
+      }
     }
-  ];
+
+    return {
+      id: `vac-${vac.id}`,
+      petName,
+      vaccine: vac.vaccineName,
+      dateGiven: vac.applicationDate,
+      sortDate: new Date(vac.applicationDate).getTime(),
+      nextDose: vac.nextDoseDate,
+      status
+    };
+  }).sort((a, b) => b.sortDate - a.sortDate);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -58,6 +59,15 @@ export function TutorVaccinesPage() {
       case 'due_soon': return <AlertTriangle className="w-4 h-4" />;
       case 'overdue': return <AlertTriangle className="w-4 h-4" />;
       default: return null;
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/D';
+    try {
+      return format(parseISO(dateString), 'dd/MM/yyyy');
+    } catch {
+      return dateString;
     }
   };
 
@@ -93,19 +103,29 @@ export function TutorVaccinesPage() {
                     </div>
                   </td>
                   <td className="p-4 text-surface-600 dark:text-surface-400">
-                    {vac.dateGiven}
+                    {formatDate(vac.dateGiven)}
                   </td>
                   <td className="p-4 font-medium text-surface-900 dark:text-white">
-                    {vac.nextDose}
+                    {formatDate(vac.nextDose)}
                   </td>
-                  <td className="p-4 text-right">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(vac.status)}`}>
-                      {getStatusIcon(vac.status)}
-                      {getStatusLabel(vac.status)}
-                    </span>
+                  <td className="p-4">
+                    <div className="flex justify-end">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(vac.status)}`}>
+                        {getStatusIcon(vac.status)}
+                        {getStatusLabel(vac.status)}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ))}
+              
+              {vaccines.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-surface-500">
+                    Nenhuma vacina encontrada para os seus pets.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
