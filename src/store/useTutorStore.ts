@@ -82,8 +82,9 @@ export const useTutorStore = create<TutorState>((set, get) => ({
       });
 
       // Se tiver só uma clínica, já seleciona direto
-      if (clinics.length === 1 && clinics[0].id) {
-        await get().setActiveClinic(clinics[0].id);
+      const firstClinic = clinics[0];
+      if (clinics.length === 1 && firstClinic && firstClinic.id) {
+        await get().setActiveClinic(firstClinic.id);
       }
 
       return true;
