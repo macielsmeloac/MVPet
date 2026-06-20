@@ -13,6 +13,7 @@ import { InventoryPage } from './pages/InventoryPage';
 import { GroomingPage } from './pages/GroomingPage';
 import { FiscalPage } from './pages/FiscalPage';
 import { CRMPage } from './pages/CRMPage';
+import { ClientProfilePage } from './pages/ClientProfilePage';
 import { LogisticsPage } from './pages/LogisticsPage';
 import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { TutorPortalPage } from './pages/TutorPortalPage';
@@ -100,6 +101,7 @@ export default function App() {
           <Route path="/fiscal" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <FiscalPage />} />
           <Route path="/estoque" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <InventoryPage />} />
           <Route path="/crm" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <CRMPage />} />
+          <Route path="/crm/:tutorId" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <ClientProfilePage />} />
           <Route path="/clube-pet" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <SubscriptionsPage />} />
           <Route path="/leva-traz" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <LogisticsPage />} />
           <Route path="/comissoes" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <CommissionsPage />} />

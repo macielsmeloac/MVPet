@@ -438,7 +438,11 @@ export function CRMPage() {
             const activeComanda = comandas[tutor.id] || [];
             
             return (
-              <div key={tutor.id} className="border border-surface-200 dark:border-surface-700 rounded-[var(--radius-lg)] p-4 hover:shadow-md transition-shadow bg-surface-50/50 dark:bg-surface-900/50 relative flex flex-col justify-between">
+              <div
+                key={tutor.id}
+                onClick={() => navigate(`/crm/${tutor.id}`)}
+                className="border border-surface-200 dark:border-surface-700 rounded-[var(--radius-lg)] p-4 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all bg-surface-50/50 dark:bg-surface-900/50 relative flex flex-col justify-between cursor-pointer"
+              >
                 <div>
                   <div className="flex justify-between items-start mb-3">
                     <div>
