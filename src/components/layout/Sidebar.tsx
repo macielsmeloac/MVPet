@@ -1,5 +1,5 @@
 import { useAppStore } from '../../store/useAppStore';
-import { getNavCategories } from '../../utils/plan-config';
+import { getNavCategories, NavItem } from '../../utils/plan-config';
 import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronLeft, PawPrint, Shield, LayoutDashboard, Users, CreditCard, Building } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -12,7 +12,7 @@ export function Sidebar() {
   const isSuperAdmin = role === 'superadmin';
   const isAdmin = role === 'admin';
 
-  let categories = isSuperAdmin
+  let categories: { category: string; items: NavItem[] }[] = isSuperAdmin
     ? [
         {
           category: 'Administração SaaS',
@@ -22,18 +22,24 @@ export function Sidebar() {
               label: 'Métricas SaaS',
               icon: LayoutDashboard,
               path: '/super-admin?tab=dashboard',
+              plans: [],
+              category: 'Administração SaaS',
             },
             {
               id: 'saas-clients',
               label: 'Clínicas Assinantes',
               icon: Users,
               path: '/super-admin?tab=clients',
+              plans: [],
+              category: 'Administração SaaS',
             },
             {
               id: 'saas-billing',
               label: 'Mensalidades / SaaS',
               icon: CreditCard,
               path: '/super-admin?tab=billing',
+              plans: [],
+              category: 'Administração SaaS',
             },
           ],
         },
