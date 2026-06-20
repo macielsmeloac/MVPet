@@ -1,13 +1,18 @@
 import { useAppStore } from '../../store/useAppStore';
 import { getNavCategories } from '../../utils/plan-config';
 import { NavLink, useLocation } from 'react-router-dom';
-import { ChevronLeft, PawPrint, Shield, LayoutDashboard, Users, CreditCard } from 'lucide-react';
+import { ChevronLeft, PawPrint, Shield, LayoutDashboard, Users, CreditCard, Building } from 'lucide-react';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export function Sidebar() {
-  const { currentPlan, sidebarCollapsed, toggleSidebar, isSuperAdminMode } = useAppStore();
+  const { currentPlan, sidebarCollapsed, toggleSidebar } = useAppStore();
+  const { role } = useAuthStore();
   const location = useLocation();
 
-  const categories = isSuperAdminMode
+  const isSuperAdmin = role === 'superadmin';
+  const isAdmin = role === 'admin';
+
+  let categories = isSuperAdmin
     ? [
         {
           category: 'Administração SaaS',
@@ -35,6 +40,20 @@ export function Sidebar() {
       ]
     : getNavCategories(currentPlan);
 
+  if (isAdmin && !isSuperAdmin) {
+    categories.unshift({
+      category: 'Gestão & Administração',
+      items: [
+        {
+          id: 'clinic-admin',
+          label: 'Painel da Clínica',
+          icon: Building,
+          path: '/admin',
+        },
+      ],
+    });
+  }
+
   return (
     <aside
       className={`fixed left-0 top-0 z-40 h-screen bg-white/70 dark:bg-surface-900/70 backdrop-blur-md border-r border-surface-200/50 dark:border-surface-800/50 transition-all duration-300 ease-out flex flex-col ${
@@ -47,12 +66,12 @@ export function Sidebar() {
         <div className="flex items-center gap-3 px-4 h-16 shrink-0">
           <div
             className={`w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center shrink-0 transition-all duration-300 ${
-              isSuperAdminMode
+              isSuperAdmin
                 ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)] text-white'
                 : 'bg-primary-500 text-white'
             }`}
           >
-            {isSuperAdminMode ? (
+            {isSuperAdmin ? (
               <Shield className="w-5 h-5 text-white animate-pulse" />
             ) : (
               <PawPrint className="w-5 h-5 text-white" />

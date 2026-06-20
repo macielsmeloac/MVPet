@@ -2,7 +2,7 @@ import type { BusinessPlan } from '../types';
 import {
   LayoutDashboard, Calendar, ClipboardList, Bed, AlertTriangle,
   Scissors, ShoppingCart, DollarSign, Package, Users,
-  Truck, CreditCard, FileText, UserCircle, Settings, Heart, PlusCircle
+  Truck, CreditCard, FileText, UserCircle, Settings, Heart, PlusCircle, Droplets
 } from 'lucide-react';
 
 export interface NavItem {
@@ -61,6 +61,14 @@ export const navItems: NavItem[] = [
     icon: Bed,
     path: '/internacao',
     plans: ['clinic', 'complete'],
+    category: 'Atendimento',
+  },
+  {
+    id: 'donors',
+    label: 'Banco de Doadores',
+    icon: Droplets,
+    path: '/doadores',
+    plans: ['petshop', 'clinic', 'office', 'complete'],
     category: 'Atendimento',
   },
   {

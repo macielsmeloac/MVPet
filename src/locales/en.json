@@ -1,0 +1,12 @@
+{
+  "auth.titleLogin": "Sign in to your account",
+  "auth.titleRegister": "Register your Clinic",
+  "auth.toggleToRegister": "Sign up for free",
+  "auth.toggleToLogin": "Sign in",
+  "auth.emailPlaceholder": "you@clinic.com",
+  "auth.passwordPlaceholder": "••••••••",
+  "auth.clinicNamePlaceholder": "My Vet Clinic",
+  "auth.submitLogin": "Sign In",
+  "auth.submitRegister": "Create Free Account",
+  "auth.errorMessage": "An error occurred during authentication."
+}

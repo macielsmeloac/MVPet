@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { PawPrint, Mail, Lock, Loader2, Building } from 'lucide-react';
+import { PawPrint, Mail, Lock, Loader2, Building, ShieldAlert, UserCog } from 'lucide-react';
+import { useAuthStore, UserRole } from '../store/useAuthStore';
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +10,21 @@ export function AuthPage() {
   const [clinicName, setClinicName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { setRole } = useAuthStore();
+
+  const handleSimulatedLogin = (role: UserRole) => {
+    setRole(role);
+    // Cria uma sessão falsa para bypassar a verificação do App.tsx no modo de testes locais
+    useAuthStore.setState({ 
+      session: { 
+        access_token: 'fake', 
+        refresh_token: 'fake', 
+        expires_in: 3600, 
+        token_type: 'bearer', 
+        user: { id: 'fake-user', aud: 'authenticated', role: 'authenticated', email: 'admin@demo.com', app_metadata: {}, user_metadata: {}, created_at: '', updated_at: '' } 
+      } 
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,6 +162,27 @@ export function AuthPage() {
               </button>
             </div>
           </form>
+
+          {/* Simulação de Perfis para Teste */}
+          <div className="mt-8 border-t border-surface-200 dark:border-surface-700 pt-6">
+            <h3 className="text-xs font-bold text-surface-500 uppercase tracking-wider text-center mb-4">
+              Acesso Rápido de Testes (Simulador)
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={() => handleSimulatedLogin('admin')}
+                className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-surface-300 dark:border-surface-600 rounded-lg shadow-sm text-sm font-bold text-surface-700 dark:text-surface-300 bg-white dark:bg-surface-800 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors"
+              >
+                <UserCog className="w-4 h-4 text-blue-500" /> Entrar como Admin da Clínica
+              </button>
+              <button
+                onClick={() => handleSimulatedLogin('superadmin')}
+                className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-surface-300 dark:border-surface-600 rounded-lg shadow-sm text-sm font-bold text-surface-700 dark:text-surface-300 bg-white dark:bg-surface-800 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors"
+              >
+                <ShieldAlert className="w-4 h-4 text-amber-500" /> Entrar como Super Admin (SaaS)
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

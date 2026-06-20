@@ -26,8 +26,12 @@ import {
   Clock,
   History,
   ShieldAlert,
-  ChevronRight
+  ChevronRight,
+  Droplets
 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDonorStore } from '../store/useDonorStore';
+import { useEffect } from 'react';
 
 const servicePresets = [
   { name: 'Consulta Clínica Veterinária', price: 120.00 },
@@ -64,6 +68,10 @@ export function CRMPage() {
     addPet,
     updateTutorDebtStatus
   } = useDataStore();
+
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { donors } = useDonorStore();
 
   const [search, setSearch] = useState('');
   const [filterTag, setFilterTag] = useState<string>('all');
@@ -123,6 +131,17 @@ export function CRMPage() {
     setNewPetBreed('');
     setDepositAmount(0);
   };
+
+  useEffect(() => {
+    const tutorId = searchParams.get('tutorId');
+    if (tutorId && !selectedTutor) {
+      const tutor = tutors.find((t) => t.id === tutorId);
+      if (tutor) {
+        handleOpenFicha(tutor, 'pets');
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, tutors, selectedTutor, setSearchParams]);
 
   // Salvar novo tutor
   const handleCreateTutor = (e: React.FormEvent) => {
@@ -917,6 +936,26 @@ export function CRMPage() {
                               <span className="text-emerald-500 font-bold flex items-center gap-0.5">
                                 <CheckCircle className="w-3 h-3" /> Prontuário Ativo
                               </span>
+                            </div>
+                            <div className="pt-3 border-t border-surface-100 mt-3 flex justify-end">
+                              {(() => {
+                                const isDonor = donors.some(d => d.petId === pet.id);
+                                return isDonor ? (
+                                  <button
+                                    onClick={() => navigate('/doadores')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded transition-colors cursor-pointer"
+                                  >
+                                    <Droplets className="w-3.5 h-3.5" /> Ver Doador
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => navigate(`/doadores?newPetId=${pet.id}`)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-surface-600 dark:text-surface-300 border border-surface-200 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-800 rounded transition-colors cursor-pointer"
+                                  >
+                                    <Droplets className="w-3.5 h-3.5" /> Cadastrar como Doador
+                                  </button>
+                                );
+                              })()}
                             </div>
                           </div>
                         ))

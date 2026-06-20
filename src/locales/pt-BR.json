@@ -1,0 +1,12 @@
+{
+  "auth.titleLogin": "Acesse sua conta",
+  "auth.titleRegister": "Cadastre sua Clínica",
+  "auth.toggleToRegister": "Cadastre-se grátis",
+  "auth.toggleToLogin": "Faça login",
+  "auth.emailPlaceholder": "voce@clinica.com",
+  "auth.passwordPlaceholder": "••••••••",
+  "auth.clinicNamePlaceholder": "Minha Clínica Vet",
+  "auth.submitLogin": "Entrar no Sistema",
+  "auth.submitRegister": "Criar Conta Grátis",
+  "auth.errorMessage": "Ocorreu um erro na autenticação."
+}

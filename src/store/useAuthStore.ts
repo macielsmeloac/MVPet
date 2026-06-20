@@ -2,18 +2,23 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 
+export type UserRole = 'superadmin' | 'admin' | 'professional' | 'receptionist' | null;
+
 interface AuthState {
   session: Session | null;
   user: User | null;
+  role: UserRole;
   loading: boolean;
   initialized: boolean;
   initialize: () => Promise<void>;
   signOut: () => Promise<void>;
+  setRole: (role: UserRole) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   user: null,
+  role: null,
   loading: true,
   initialized: false,
 
@@ -33,6 +38,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ session: null, user: null });
+    set({ session: null, user: null, role: null });
   },
+
+  setRole: (role) => set({ role }),
 }));

@@ -17,9 +17,11 @@ import { LogisticsPage } from './pages/LogisticsPage';
 import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { TutorPortalPage } from './pages/TutorPortalPage';
 import { SuperAdminPage } from './pages/SuperAdminPage';
+import { AdminPage } from './pages/AdminPage';
 import { CommissionsPage } from './pages/CommissionsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { DonorsPage } from './pages/DonorsPage';
 import { AuthPage } from './pages/AuthPage';
 
 // Tutor Portal Pages
@@ -39,10 +41,10 @@ import { useSaaSStore } from './store/useSaaSStore';
 import { useAuthStore } from './store/useAuthStore';
 
 export default function App() {
-  const { darkMode, isSuperAdminMode } = useAppStore();
+  const { darkMode } = useAppStore();
   const { initializeData } = useDataStore();
   const { initializeSaaSData } = useSaaSStore();
-  const { session, loading, initialize: initAuth } = useAuthStore();
+  const { session, role, loading, initialize: initAuth } = useAuthStore();
 
   useEffect(() => {
     initAuth();
@@ -76,31 +78,35 @@ export default function App() {
     return <AuthPage />;
   }
 
+  const isSuperAdmin = role === 'superadmin';
+
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<AppShell />}>
-          <Route index element={isSuperAdminMode ? <SuperAdminPage /> : <DashboardPage />} />
+          <Route index element={isSuperAdmin ? <SuperAdminPage /> : <DashboardPage />} />
           
-          <Route path="/super-admin" element={<SuperAdminPage />} />
+          <Route path="/super-admin" element={isSuperAdmin ? <SuperAdminPage /> : <Navigate to="/" replace />} />
+          <Route path="/admin" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <AdminPage />} />
 
-          <Route path="/agenda" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <AppointmentsPage />} />
-          <Route path="/cadastro" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <RegistrationPage />} />
-          <Route path="/prontuarios" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <MedicalRecordsPage />} />
-          <Route path="/triagem" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <TriagePage />} />
-          <Route path="/internacao" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <HospitalizationPage />} />
-          <Route path="/banho-tosa" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <GroomingPage />} />
-          <Route path="/caixa" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <POSPage />} />
-          <Route path="/financeiro" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <FinancialPage />} />
-          <Route path="/fiscal" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <FiscalPage />} />
-          <Route path="/estoque" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <InventoryPage />} />
-          <Route path="/crm" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <CRMPage />} />
-          <Route path="/clube-pet" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <SubscriptionsPage />} />
-          <Route path="/leva-traz" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <LogisticsPage />} />
-          <Route path="/comissoes" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <CommissionsPage />} />
-          <Route path="/portal-tutor" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <TutorPortalPage />} />
-          <Route path="/configuracoes" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <SettingsPage />} />
-          <Route path="/relatorios" element={isSuperAdminMode ? <Navigate to="/super-admin" replace /> : <ReportsPage />} />
+          <Route path="/agenda" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <AppointmentsPage />} />
+          <Route path="/cadastro" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <RegistrationPage />} />
+          <Route path="/prontuarios" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <MedicalRecordsPage />} />
+          <Route path="/triagem" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <TriagePage />} />
+          <Route path="/internacao" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <HospitalizationPage />} />
+          <Route path="/banho-tosa" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <GroomingPage />} />
+          <Route path="/caixa" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <POSPage />} />
+          <Route path="/financeiro" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <FinancialPage />} />
+          <Route path="/fiscal" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <FiscalPage />} />
+          <Route path="/estoque" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <InventoryPage />} />
+          <Route path="/crm" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <CRMPage />} />
+          <Route path="/clube-pet" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <SubscriptionsPage />} />
+          <Route path="/leva-traz" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <LogisticsPage />} />
+          <Route path="/comissoes" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <CommissionsPage />} />
+          <Route path="/portal-tutor" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <TutorPortalPage />} />
+          <Route path="/configuracoes" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <SettingsPage />} />
+          <Route path="/relatorios" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <ReportsPage />} />
+          <Route path="/doadores" element={isSuperAdmin ? <Navigate to="/super-admin" replace /> : <DonorsPage />} />
         </Route>
 
         {/* Tutor Portal Routes */}
