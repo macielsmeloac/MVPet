@@ -17,7 +17,7 @@ export function TutorMarketplacePage() {
       if (existing) {
         return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
       }
-      return [...prev, { id: product.id, name: product.name, price: product.salePrice, qty: 1 }];
+      return [...prev, { id: product.id, name: product.name, price: product.price, qty: 1 }];
     });
   };
 
@@ -84,19 +84,15 @@ export function TutorMarketplacePage() {
             {products.map(product => (
               <div key={product.id} className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 overflow-hidden flex flex-col group hover:shadow-lg transition-all">
                 <div className="h-48 overflow-hidden bg-surface-100 dark:bg-surface-900 flex items-center justify-center">
-                  {product.imageUrl ? (
-                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <ShoppingBag className="w-16 h-16 text-surface-300" />
-                  )}
+                  <ShoppingBag className="w-16 h-16 text-surface-300" />
                 </div>
                 <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-bold text-surface-900 dark:text-white mb-2 flex-1">{product.name}</h3>
                   <div className="flex items-end justify-between mt-4">
                     <div>
-                      <p className="text-xs text-surface-500 mb-1">Estoque: {product.stockQuantity || 0}</p>
+                      <p className="text-xs text-surface-500 mb-1">Estoque: {product.quantity || 0}</p>
                       <p className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                        R$ {(product.salePrice || 0).toFixed(2).replace('.', ',')}
+                        R$ {(product.price || 0).toFixed(2).replace('.', ',')}
                       </p>
                     </div>
                     <button 

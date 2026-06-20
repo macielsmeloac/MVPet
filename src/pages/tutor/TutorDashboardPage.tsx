@@ -22,7 +22,7 @@ export function TutorDashboardPage() {
         icon: <Calendar className="w-5 h-5 text-blue-500" />,
         bg: 'bg-blue-50 dark:bg-blue-900/30',
         title: `Agendamento - ${petName}`,
-        desc: `${format(appDate, 'dd/MM/yyyy')} às ${app.time}`
+        desc: `${format(appDate, 'dd/MM/yyyy')} às ${app.startTime}`
       });
     }
   });
@@ -74,9 +74,9 @@ export function TutorDashboardPage() {
             <div key={pet.id} className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  {pet.photoUrl ? (
+                  {pet.photo ? (
                     <img 
-                      src={pet.photoUrl} 
+                      src={pet.photo} 
                       alt={pet.name} 
                       className="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 dark:border-indigo-900/50"
                     />
